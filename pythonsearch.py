@@ -61,6 +61,7 @@ import tempfile
 # import NLTK stopwords here
 # use stemmer from NLTK ml_intro
 
+__version__ = (1, 0, 0)
 
 class PythonSearch(object):
     """
