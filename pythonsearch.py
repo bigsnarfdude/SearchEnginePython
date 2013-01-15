@@ -7,7 +7,7 @@ Python POC search engine lib
 Usage
 
     import pythonsearch
-    ps_instance = pythonsearch.Pythonsearch('path_to_data')
+    ps_instance = pythonsearch.PythonSearch('path_to_data')
 
     # Index data
     ps_instance.index('email_1', {'text': "Peter,\n\nI'm going to need those TPS reports on my desk first thing tomorrow! And clean up your desk!\n\nLumbergh"})
@@ -68,7 +68,7 @@ class PythonSearch(object):
 
     Usage:
 
-        ps_instance = pythonsearch.Pythonsearch('path_to_data')
+        ps_instance = pythonsearch.PythonSearch('path_to_data')
         ps_instance.index('email_1', {'text': "This is a blob of text to be indexed."})
         ps_instance.search('blob')
 
