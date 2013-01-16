@@ -6,48 +6,48 @@ Python POC search engine lib
 
 Usage
 
-	import pythonsearch
-	ps_instance = pythonsearch.PythonSearch('path_to_data')
+    import pythonsearch
+    ps_instance = pythonsearch.PythonSearch('path_to_data')
 
-	# Index data
-	ps_instance.index('email_1', {'text': "Peter,\n\nI'm going to need those TPS reports on my desk first thing tomorrow! And clean up your desk!\n\nLumbergh"})
-	ps_instance.index('email_2', {'text': 'Everyone,\n\nM-m-m-m-my red stapler has gone missing. H-h-has a-an-anyone seen it?\n\nMilton'})
-	ps_instance.index('email_3', {'text': "Peter,\n\nYeah, I'm going to need you to come in on Saturday. Don't forget those reports.\n\nLumbergh"})
-	ps_instance.index('email_4', {'text': 'How do you feel about becoming Management?\n\nThe Bobs'})
+    # Index data
+    ps_instance.index('email_1', {'text': "Peter,\n\nI'm going to need those TPS reports on my desk first thing tomorrow! And clean up your desk!\n\nLumbergh"})
+    ps_instance.index('email_2', {'text': 'Everyone,\n\nM-m-m-m-my red stapler has gone missing. H-h-has a-an-anyone seen it?\n\nMilton'})
+    ps_instance.index('email_3', {'text': "Peter,\n\nYeah, I'm going to need you to come in on Saturday. Don't forget those reports.\n\nLumbergh"})
+    ps_instance.index('email_4', {'text': 'How do you feel about becoming Management?\n\nThe Bobs'})
 
-	# Search
-	ps_instance.search('Peter')
-	ps_instance.search('tps report')
+    # Search
+    ps_instance.search('Peter')
+    ps_instance.search('tps report')
 
-	# Documents are keys are field names
-	# Values are the field's contents
-	{
-		"id": "document-1524",
-		"text": "This is a blob of text. Nothing special about the text, just a typical document.",
-		"created": "2012-02-18T20:19:00-0000",
-	}
+    # Documents are keys are field names
+    # Values are the field's contents
+    {
+        "id": "document-1524",
+        "text": "This is a blob of text. Nothing special about the text, just a typical document.",
+        "created": "2012-02-18T20:19:00-0000",
+    }
 
 	# The (inverted) index itself (represented by the segment file bits), is also
 	# essentially a dictionary. The difference is that the index is term-based, unlike
 	# the field-based nature of the document:
-	# Keys are terms
-	# Values are document/position information
-	index = {
-		'blob': {
-			'document-1524': [3],
-		},
-		'text': {
-			'document-1524': [5, 10],
-		},
-	}
+    # Keys are terms
+    # Values are document/position information
+    index = {
+        'blob': {
+            'document-1524': [3],
+        },
+        'text': {
+            'document-1524': [5, 10],
+        },
+    }
 
 	# For this library, on disk, this is represented by a large number of small
 	# segment files. You hash the term in question & take the first 6 chars of the
 	# hash to determine what segment file it should be in. Those files are
 	# maintained in alphabetical order. They look something like:
 
-	blob\t{'document-1523': [3]}\n
-	text\t{'document-1523': [5, 10]}\n
+    blob\t{'document-1523': [3]}\n
+    text\t{'document-1523': [5, 10]}\n
 
 """
 
@@ -58,9 +58,6 @@ import math
 import os
 import re
 import tempfile
-import redis
-
-r = redis.StrictRedis(host='localhost', port=6379, db=0)
 # import NLTK stopwords here
 # use stemmer from NLTK ml_intro
 
@@ -77,12 +74,13 @@ class PythonSearch(object):
         ps_instance.search('blob')
 
     """
+
     STOP_WORDS = set([
-		'a', 'an', 'and', 'are', 'as', 'at', 'be', 'but', 'by',
-		'for', 'if', 'in', 'into', 'is', 'it',
-		'no', 'not', 'of', 'on', 'or', 's', 'such',
-		't', 'that', 'the', 'their', 'then', 'there', 'these',
-		'they', 'this', 'to', 'was', 'will', 'with'
+        'a', 'an', 'and', 'are', 'as', 'at', 'be', 'but', 'by',
+        'for', 'if', 'in', 'into', 'is', 'it',
+        'no', 'not', 'of', 'on', 'or', 's', 'such',
+        't', 'that', 'the', 'their', 'then', 'there', 'these',
+        'they', 'this', 'to', 'was', 'will', 'with'
 		])
     PUNCTUATION = re.compile('[~`!@#$%^&*()+={\[}\]|\\:;"\',<.>/?]')
 
@@ -153,6 +151,7 @@ class PythonSearch(object):
 
                 if not position in terms[gram]:
                     terms[gram].append(position)
+
         return terms
 
     def hash_name(self, term, length=6):
@@ -178,6 +177,7 @@ class PythonSearch(object):
                 new_positions = set(positions)
                 orig_positions.update(new_positions)
                 orig_info[doc_id] = list(orig_positions)
+
         return orig_info
 
     def save_segment(self, term, term_info, update=False):
@@ -239,32 +239,50 @@ class PythonSearch(object):
     def make_document_name(self, doc_id):
         return os.path.join(self.docs_path, self.hash_name(doc_id), "{0}.json".format(doc_id))
 
-    # redis integration for document storage
     def save_document(self, doc_id, document):
-        r.set(doc_id, json.dumps(document, ensure_ascii=False))
+        doc_path = self.make_document_name(doc_id)
+        base_path = os.path.dirname(doc_path)
+
+        if not os.path.exists(base_path):
+            os.makedirs(base_path)
+
+        with open(doc_path, 'w') as doc_file:
+            doc_file.write(json.dumps(document, ensure_ascii=False))
+
         return True
 
-    # redis integration for document retrieval
     def load_document(self, doc_id):
-        return json.loads(r.get(doc_id))
+        doc_path = self.make_document_name(doc_id)
+
+        with open(doc_path, 'r') as doc_file:
+            data = json.loads(doc_file.read())
+
+        return data
+
 
     def index(self, doc_id, document):
         if not hasattr(document, 'items'):
             raise AttributeError('You must provide `index` with a document in the form of a dictionary.')
+
         if not 'text' in document:
             raise KeyError('You must provide `index` with a document with a `text` field in it.')
+
         doc_id = str(doc_id)
         self.save_document(doc_id, document)
+
         tokens = self.make_tokens(document.get('text', ''))
         terms = self.make_ngrams(tokens)
-		
+
         for term, positions in terms.items():
-			self.save_segment(term, {doc_id: positions}, update=True)
+            self.save_segment(term, {doc_id: positions}, update=True)
+
         self.increment_total_docs()
         return True
+
     def parse_query(self, query):
         tokens = self.make_tokens(query)
         return self.make_ngrams(tokens)
+
     def collect_results(self, terms):
         per_term_docs = {}
         per_doc_counts = {}
