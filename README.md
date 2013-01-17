@@ -7,7 +7,7 @@ Get Redis Going
 _______________
 
 ![alt text][logo]
-[logo]: https://raw.github.com/bigsnarfdude/SearchEnginePython/master/Screen%20Shot%202013-01-16%20at%209.08.44%20PM.png "Redis Screenshot"
+[logo]: https://raw.github.com/bigsnarfdude/SearchEnginePython/master/Screen%20Shot%202013-01-16%20at%209.08.44%20PM.png  "Redis Screenshot"
 
 
 iPython Screenshot 
